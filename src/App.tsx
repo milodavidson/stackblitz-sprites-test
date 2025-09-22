@@ -32,13 +32,13 @@ export default function App() {
       setPosition((prev) => {
         switch (e.key) {
           case "ArrowUp":
-            return { ...prev, y: prev.y - 10 };
+            return { ...prev, y: prev.y - 5 };
           case "ArrowDown":
-            return { ...prev, y: prev.y + 10 };
+            return { ...prev, y: prev.y + 5 };
           case "ArrowLeft":
-            return { ...prev, x: prev.x - 10 };
+            return { ...prev, x: prev.x - 5 };
           case "ArrowRight":
-            return { ...prev, x: prev.x + 10 };
+            return { ...prev, x: prev.x + 5 };
           default:
             return prev;
         }
