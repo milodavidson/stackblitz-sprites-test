@@ -56,30 +56,31 @@ export default function App() {
   // Game loop for movement
   useEffect(() => {
     const interval = setInterval(() => {
-      let moved = false;
       setPosition((prev) => {
         let newPos = { ...prev };
         if (keysPressed.current.has("ArrowUp")) {
           newPos.y -= 10;
-          moved = true;
         }
         if (keysPressed.current.has("ArrowDown")) {
           newPos.y += 10;
-          moved = true;
         }
         if (keysPressed.current.has("ArrowLeft")) {
           newPos.x -= 10;
           setLastDirection("left");
-          moved = true;
         }
         if (keysPressed.current.has("ArrowRight")) {
           newPos.x += 10;
           setLastDirection("right");
-          moved = true;
         }
         return newPos;
       });
-      setIsMoving(moved);
+      // Moving if any arrow key is held
+      setIsMoving(
+        keysPressed.current.has("ArrowUp") ||
+        keysPressed.current.has("ArrowDown") ||
+        keysPressed.current.has("ArrowLeft") ||
+        keysPressed.current.has("ArrowRight")
+      );
     }, 16); // ~60 FPS
     return () => clearInterval(interval);
   }, []);
