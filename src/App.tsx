@@ -6,6 +6,11 @@ import Tree from "./assets/Tree1.png";
 
 export default function App() {
   const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [frame, setFrame] = useState(0);
+
+  const totalFrames = 5; // number of frames in your sprite sheet
+  const frameWidth = 64; // width of a single frame in pixels
+  const frameHeight = 64; // height of a single frame
 
   // Arrow key movement
   useEffect(() => {
@@ -28,6 +33,14 @@ export default function App() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Animate the archer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFrame((prev) => (prev + 1) % totalFrames);
+    }, 200); // change frame every 200ms
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -54,16 +67,17 @@ export default function App() {
         }}
       />
 
-      {/* Archer (movable) */}
-      <img
-        src={ArcherIdle}
-        alt="Archer"
+      {/* Archer (animated) */}
+      <div
         style={{
           position: "absolute",
           left: position.x,
           top: position.y,
-          width: 64,
-          height: 64,
+          width: frameWidth,
+          height: frameHeight,
+          backgroundImage: `url(${ArcherIdle})`,
+          backgroundPosition: `-${frame * frameWidth}px 0px`,
+          backgroundSize: `${frameWidth * totalFrames}px ${frameHeight}px`,
         }}
       />
     </div>
