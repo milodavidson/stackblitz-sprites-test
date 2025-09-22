@@ -79,6 +79,11 @@ export default function App() {
     };
   }, []);
 
+  // Reset archer frame when switching between idle and running
+  useEffect(() => {
+    setArcherFrame(0);
+  }, [isMoving]);
+
   // Animate the archer
   useEffect(() => {
     const interval = setInterval(() => {
