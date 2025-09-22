@@ -105,6 +105,10 @@ export default function App() {
 
   const currentArcherFrames = isMoving ? runFrames : idleFrames;
 
+  // Scaling factor
+  const scale = 4;
+  const spriteSize = 64 * scale; // 64px original × 4
+
   return (
     <div
       style={{
@@ -124,8 +128,8 @@ export default function App() {
           position: "absolute",
           left: 300,
           top: 200,
-          width: 64,
-          height: 64,
+          width: spriteSize,
+          height: spriteSize,
         }}
       />
 
@@ -137,8 +141,8 @@ export default function App() {
           position: "absolute",
           left: position.x,
           top: position.y,
-          width: 64,
-          height: 64,
+          width: spriteSize,
+          height: spriteSize,
           transform: lastDirection === "left" ? "scaleX(-1)" : "scaleX(1)",
         }}
       />
