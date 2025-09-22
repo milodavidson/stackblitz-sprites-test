@@ -143,7 +143,7 @@ export default function App() {
     const interval = setInterval(() => {
       setShootFrame((prev) => {
         const next = prev + 1;
-        if (next >= shootFrames.length) {
+        if (next >= shootFrames.length-1) {
           // Spawn arrow after shoot animation completes
           setArrows((prevArrows) => [
             ...prevArrows,
