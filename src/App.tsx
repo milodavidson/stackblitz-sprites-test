@@ -1,16 +1,30 @@
 import { useState, useEffect } from "react";
 
-// Import the sprites you uploaded
-import ArcherIdle from "./assets/Archer_Idle.png";
-import Tree from "./assets/Tree1.png";
+// Import the split archer frames
+import Archer1 from "./assets/Archer1.png";
+import Archer2 from "./assets/Archer2.png";
+import Archer3 from "./assets/Archer3.png";
+import Archer4 from "./assets/Archer4.png";
+import Archer5 from "./assets/Archer5.png";
+import Archer6 from "./assets/Archer6.png";
+
+// Import the split tree frames
+import Tree1 from "./assets/Tree1.png";
+import Tree2 from "./assets/Tree2.png";
+import Tree3 from "./assets/Tree3.png";
+import Tree4 from "./assets/Tree4.png";
+import Tree5 from "./assets/Tree5.png";
+import Tree6 from "./assets/Tree6.png";
+import Tree7 from "./assets/Tree7.png";
+import Tree8 from "./assets/Tree8.png";
+
+const archerFrames = [Archer1, Archer2, Archer3, Archer4, Archer5, Archer6];
+const treeFrames = [Tree1, Tree2, Tree3, Tree4, Tree5, Tree6, Tree7, Tree8];
 
 export default function App() {
   const [position, setPosition] = useState({ x: 100, y: 100 });
-  const [frame, setFrame] = useState(0);
-
-  const totalFrames = 5; // number of frames in your sprite sheet
-  const frameWidth = 64; // width of a single frame in pixels
-  const frameHeight = 64; // height of a single frame
+  const [archerFrame, setArcherFrame] = useState(0);
+  const [treeFrame, setTreeFrame] = useState(0);
 
   // Arrow key movement
   useEffect(() => {
@@ -38,8 +52,16 @@ export default function App() {
   // Animate the archer
   useEffect(() => {
     const interval = setInterval(() => {
-      setFrame((prev) => (prev + 1) % totalFrames);
+      setArcherFrame((prev) => (prev + 1) % archerFrames.length);
     }, 200); // change frame every 200ms
+    return () => clearInterval(interval);
+  }, []);
+
+  // Animate the tree (optional, like a gentle sway)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTreeFrame((prev) => (prev + 1) % treeFrames.length);
+    }, 400); // slower, 400ms per frame
     return () => clearInterval(interval);
   }, []);
 
@@ -54,9 +76,9 @@ export default function App() {
         imageRendering: "pixelated",
       }}
     >
-      {/* Tree (static object) */}
+      {/* Tree (animated) */}
       <img
-        src={Tree}
+        src={treeFrames[treeFrame]}
         alt="Tree"
         style={{
           position: "absolute",
@@ -67,17 +89,16 @@ export default function App() {
         }}
       />
 
-      {/* Archer (animated) */}
-      <div
+      {/* Archer (movable & animated) */}
+      <img
+        src={archerFrames[archerFrame]}
+        alt="Archer"
         style={{
           position: "absolute",
           left: position.x,
           top: position.y,
-          width: frameWidth,
-          height: frameHeight,
-          backgroundImage: `url(${ArcherIdle})`,
-          backgroundPosition: `-${frame * frameWidth}px 0px`,
-          backgroundSize: `${frameWidth * totalFrames}px ${frameHeight}px`,
+          width: 64,
+          height: 64,
         }}
       />
     </div>
