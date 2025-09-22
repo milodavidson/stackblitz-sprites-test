@@ -36,7 +36,16 @@ import Tree8 from "./assets/Tree8.png";
 
 const idleFrames = [ArcherIdle1, ArcherIdle2, ArcherIdle3, ArcherIdle4, ArcherIdle5, ArcherIdle6];
 const runFrames = [ArcherRun1, ArcherRun2, ArcherRun3, ArcherRun4];
-const shootFrames = [ArcherShoot1, ArcherShoot2, ArcherShoot3, ArcherShoot4, ArcherShoot5, ArcherShoot6, ArcherShoot7, ArcherShoot8];
+const shootFrames = [
+  ArcherShoot1,
+  ArcherShoot2,
+  ArcherShoot3,
+  ArcherShoot4,
+  ArcherShoot5,
+  ArcherShoot6,
+  ArcherShoot7,
+  ArcherShoot8,
+];
 const treeFrames = [Tree1, Tree2, Tree3, Tree4, Tree5, Tree6, Tree7, Tree8];
 
 type Direction = "left" | "right";
@@ -57,12 +66,12 @@ export default function App() {
   const [playerLastDir, setPlayerLastDir] = useState<Direction>("right");
   const [playerIsMoving, setPlayerIsMoving] = useState(false);
   const [playerIsShooting, setPlayerIsShooting] = useState(false);
+  const [shootFrame, setShootFrame] = useState(0);
 
   // --- AI Archer ---
   const [aiPos, setAiPos] = useState({ x: 500, y: 300 });
   const [aiFrame, setAiFrame] = useState(0);
   const [aiLastDir, setAiLastDir] = useState<Direction>("left");
-  const [aiIsMoving, setAiIsMoving] = useState(false);
 
   // --- Tree ---
   const [treeFrame, setTreeFrame] = useState(0);
@@ -79,10 +88,9 @@ export default function App() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       keysPressed.current.add(e.key);
-      if (e.key === " ") {
-        if (!playerIsShooting) {
-          setPlayerIsShooting(true);
-        }
+      if (e.key === " " && !playerIsShooting) {
+        setPlayerIsShooting(true);
+        setShootFrame(0);
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -126,26 +134,25 @@ export default function App() {
   // --- Player Animation ---
   useEffect(() => {
     if (playerIsShooting) {
-      let frame = 0;
-      const shootInterval = setInterval(() => {
-        frame++;
-        if (frame >= shootFrames.length) {
-          clearInterval(shootInterval);
-          setPlayerIsShooting(false);
-          // Fire arrow after shooting animation
-          setArrows((prev) => [
-            ...prev,
-            { x: playerPos.x, y: playerPos.y, direction: playerLastDir },
-          ]);
-        } else {
-          setPlayerFrame(frame);
-        }
+      const interval = setInterval(() => {
+        setShootFrame((prev) => {
+          const next = prev + 1;
+          if (next >= shootFrames.length) {
+            // Spawn arrow after shooting animation
+            setArrows((prevArrows) => [
+              ...prevArrows,
+              { x: playerPos.x, y: playerPos.y, direction: playerLastDir },
+            ]);
+            setPlayerIsShooting(false);
+            return 0;
+          }
+          return next;
+        });
       }, 100);
-      return () => clearInterval(shootInterval);
+      return () => clearInterval(interval);
     } else {
       const interval = setInterval(() => {
-        const frames = playerIsMoving ? runFrames : idleFrames;
-        setPlayerFrame((prev) => (prev + 1) % frames.length);
+        setPlayerFrame((prev) => (prev + 1) % (playerIsMoving ? runFrames.length : idleFrames.length));
       }, 200);
       return () => clearInterval(interval);
     }
@@ -177,7 +184,6 @@ export default function App() {
         }
         return newPos;
       });
-      setAiIsMoving(true);
     }, 500);
     return () => clearInterval(interval);
   }, []);
@@ -206,8 +212,8 @@ export default function App() {
         prev.forEach((arrow) => {
           let newArrow = { ...arrow };
           newArrow.x += arrow.direction === "right" ? 15 : -15;
-          newArrow.y += 0; // horizontal only
-          // Check collision with AI
+
+          // Collision check
           if (
             newArrow.x + spriteSize > aiPos.x &&
             newArrow.x < aiPos.x + spriteSize &&
@@ -225,7 +231,12 @@ export default function App() {
     return () => clearInterval(interval);
   }, [aiPos]);
 
-  const playerSprite = playerIsShooting ? shootFrames[playerFrame] : (playerIsMoving ? runFrames[playerFrame % runFrames.length] : idleFrames[playerFrame % idleFrames.length]);
+  const playerSprite = playerIsShooting
+    ? shootFrames[shootFrame]
+    : playerIsMoving
+    ? runFrames[playerFrame % runFrames.length]
+    : idleFrames[playerFrame % idleFrames.length];
+
   const aiSprite = runFrames[aiFrame % runFrames.length];
 
   return (
@@ -289,7 +300,7 @@ export default function App() {
           style={{
             position: "absolute",
             left: arrow.x,
-            top: arrow.y + spriteSize / 2 - 8, // center arrow vertically
+            top: arrow.y + spriteSize / 2 - 8,
             width: 32 * scale,
             height: 16 * scale,
             transform: arrow.direction === "left" ? "scaleX(-1)" : "scaleX(1)",
