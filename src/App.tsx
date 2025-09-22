@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Idle frames (6 frames)
 import ArcherIdle1 from "./assets/ArcherIdle1.png";
@@ -14,7 +14,7 @@ import ArcherRun2 from "./assets/ArcherRun2.png";
 import ArcherRun3 from "./assets/ArcherRun3.png";
 import ArcherRun4 from "./assets/ArcherRun4.png";
 
-// Tree frames (8 frames, optional)
+// Tree frames (8 frames)
 import Tree1 from "./assets/Tree1.png";
 import Tree2 from "./assets/Tree2.png";
 import Tree3 from "./assets/Tree3.png";
@@ -35,48 +35,53 @@ export default function App() {
   const [lastDirection, setLastDirection] = useState<"left" | "right">("right");
   const [isMoving, setIsMoving] = useState(false);
 
-  // Arrow key movement
+  const keysPressed = useRef(new Set<string>());
+
+  // Handle key presses
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      setPosition((prev) => {
-        let moved = false;
-        let newPos = { ...prev };
-        switch (e.key) {
-          case "ArrowUp":
-            newPos.y -= 10;
-            moved = true;
-            break;
-          case "ArrowDown":
-            newPos.y += 10;
-            moved = true;
-            break;
-          case "ArrowLeft":
-            newPos.x -= 10;
-            setLastDirection("left");
-            moved = true;
-            break;
-          case "ArrowRight":
-            newPos.x += 10;
-            setLastDirection("right");
-            moved = true;
-            break;
-        }
-        setIsMoving(moved);
-        return newPos;
-      });
+      keysPressed.current.add(e.key);
     };
-
-    const handleKeyUp = () => {
-      setIsMoving(false);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.key);
     };
-
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
+  }, []);
+
+  // Game loop for movement
+  useEffect(() => {
+    const interval = setInterval(() => {
+      let moved = false;
+      setPosition((prev) => {
+        let newPos = { ...prev };
+        if (keysPressed.current.has("ArrowUp")) {
+          newPos.y -= 10;
+          moved = true;
+        }
+        if (keysPressed.current.has("ArrowDown")) {
+          newPos.y += 10;
+          moved = true;
+        }
+        if (keysPressed.current.has("ArrowLeft")) {
+          newPos.x -= 10;
+          setLastDirection("left");
+          moved = true;
+        }
+        if (keysPressed.current.has("ArrowRight")) {
+          newPos.x += 10;
+          setLastDirection("right");
+          moved = true;
+        }
+        return newPos;
+      });
+      setIsMoving(moved);
+    }, 16); // ~60 FPS
+    return () => clearInterval(interval);
   }, []);
 
   // Reset archer frame when switching between idle and running
@@ -95,7 +100,7 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isMoving]);
 
-  // Animate the tree (optional)
+  // Animate the tree
   useEffect(() => {
     const interval = setInterval(() => {
       setTreeFrame((prev) => (prev + 1) % treeFrames.length);
@@ -104,10 +109,8 @@ export default function App() {
   }, []);
 
   const currentArcherFrames = isMoving ? runFrames : idleFrames;
-
-  // Scaling factor
   const scale = 4;
-  const spriteSize = 64 * scale; // 64px original × 4
+  const spriteSize = 64 * scale;
 
   return (
     <div
@@ -120,7 +123,7 @@ export default function App() {
         imageRendering: "pixelated",
       }}
     >
-      {/* Tree (animated) */}
+      {/* Tree */}
       <img
         src={treeFrames[treeFrame]}
         alt="Tree"
@@ -133,7 +136,7 @@ export default function App() {
         }}
       />
 
-      {/* Archer (movable & animated, flips left/right) */}
+      {/* Archer */}
       <img
         src={currentArcherFrames[archerFrame]}
         alt="Archer"
