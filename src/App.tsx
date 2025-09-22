@@ -62,8 +62,10 @@ export default function App() {
 
   // --- Player ---
   const [playerPos, setPlayerPos] = useState({ x: 100, y: 100 });
+  const playerPosRef = useRef(playerPos);
   const [playerFrame, setPlayerFrame] = useState(0);
   const [playerLastDir, setPlayerLastDir] = useState<Direction>("right");
+  const playerLastDirRef = useRef(playerLastDir);
   const [playerIsMoving, setPlayerIsMoving] = useState(false);
   const [playerIsShooting, setPlayerIsShooting] = useState(false);
   const [shootFrame, setShootFrame] = useState(0);
@@ -83,6 +85,10 @@ export default function App() {
   const [score, setScore] = useState(0);
 
   const keysPressed = useRef(new Set<string>());
+
+  // --- Keep refs updated ---
+  useEffect(() => { playerPosRef.current = playerPos; }, [playerPos]);
+  useEffect(() => { playerLastDirRef.current = playerLastDir; }, [playerLastDir]);
 
   // --- Input ---
   useEffect(() => {
@@ -104,7 +110,7 @@ export default function App() {
     };
   }, [playerIsShooting]);
 
-  // --- Game Loop: Player Movement ---
+  // --- Player Movement ---
   useEffect(() => {
     const interval = setInterval(() => {
       setPlayerPos((prev) => {
@@ -131,32 +137,39 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- Player Animation ---
+  // --- Player Shooting Animation ---
   useEffect(() => {
-    if (playerIsShooting) {
-      const interval = setInterval(() => {
-        setShootFrame((prev) => {
-          const next = prev + 1;
-          if (next >= shootFrames.length) {
-            // Spawn arrow after shooting animation
-            setArrows((prevArrows) => [
-              ...prevArrows,
-              { x: playerPos.x, y: playerPos.y, direction: playerLastDir },
-            ]);
-            setPlayerIsShooting(false);
-            return 0;
-          }
-          return next;
-        });
-      }, 100);
-      return () => clearInterval(interval);
-    } else {
-      const interval = setInterval(() => {
-        setPlayerFrame((prev) => (prev + 1) % (playerIsMoving ? runFrames.length : idleFrames.length));
-      }, 200);
-      return () => clearInterval(interval);
-    }
-  }, [playerIsMoving, playerIsShooting, playerPos, playerLastDir]);
+    if (!playerIsShooting) return;
+    const interval = setInterval(() => {
+      setShootFrame((prev) => {
+        const next = prev + 1;
+        if (next >= shootFrames.length) {
+          // Spawn arrow after shoot animation completes
+          setArrows((prevArrows) => [
+            ...prevArrows,
+            {
+              x: playerPosRef.current.x,
+              y: playerPosRef.current.y,
+              direction: playerLastDirRef.current,
+            },
+          ]);
+          setPlayerIsShooting(false);
+          return 0;
+        }
+        return next;
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [playerIsShooting]);
+
+  // --- Player Idle/Run Animation ---
+  useEffect(() => {
+    if (playerIsShooting) return;
+    const interval = setInterval(() => {
+      setPlayerFrame((prev) => (prev + 1) % (playerIsMoving ? runFrames.length : idleFrames.length));
+    }, 200);
+    return () => clearInterval(interval);
+  }, [playerIsMoving, playerIsShooting]);
 
   // --- AI Movement ---
   useEffect(() => {
@@ -165,22 +178,10 @@ export default function App() {
         const dir = Math.floor(Math.random() * 4);
         let newPos = { ...prev };
         switch (dir) {
-          case 0:
-            newPos.y -= 5;
-            setAiLastDir("right");
-            break;
-          case 1:
-            newPos.y += 5;
-            setAiLastDir("right");
-            break;
-          case 2:
-            newPos.x -= 5;
-            setAiLastDir("left");
-            break;
-          case 3:
-            newPos.x += 5;
-            setAiLastDir("right");
-            break;
+          case 0: newPos.y -= 5; setAiLastDir("right"); break;
+          case 1: newPos.y += 5; setAiLastDir("right"); break;
+          case 2: newPos.x -= 5; setAiLastDir("left"); break;
+          case 3: newPos.x += 5; setAiLastDir("right"); break;
         }
         return newPos;
       });
@@ -213,7 +214,7 @@ export default function App() {
           let newArrow = { ...arrow };
           newArrow.x += arrow.direction === "right" ? 15 : -15;
 
-          // Collision check
+          // Collision with AI
           if (
             newArrow.x + spriteSize > aiPos.x &&
             newArrow.x < aiPos.x + spriteSize &&
